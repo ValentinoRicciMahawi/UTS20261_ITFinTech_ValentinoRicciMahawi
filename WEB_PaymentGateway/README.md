@@ -1,83 +1,55 @@
-# WEB_PaymentGateway — Cafe Pintar ☕
+# WEB_PaymentGateway - Cafe Pintar
 
-Aplikasi pemesanan makanan & minuman **Cafe Pintar** menggunakan **Next.js (Pages Router)** + **MongoDB**.
+Project UTS IT FinTech. Website pemesanan makanan dan minuman untuk "Cafe Pintar" dengan pembayaran lewat payment gateway.
 
-## Progress
-- ✅ **Tahap 1:** Project Next.js + tampilan 3 halaman (Select Item, Checkout, Payment)
-- ✅ **Tahap 2:** Database MongoDB (collection Product, Checkout, Payment)
-- ⏳ Tahap 3: Integrasi Xendit + webhook untuk status **LUNAS** otomatis
+Dibuat pakai Next.js (Pages Router) dan MongoDB.
 
----
+## Tahapan pengerjaan
 
-## Tahap 2 — Database MongoDB
+1. **Tahap 1** - Setup project Next.js dan tampilan 3 halaman (Select Item, Checkout, Payment)
+2. **Tahap 2** - Menyambungkan ke MongoDB (Product, Checkout, Payment)
+3. **Tahap 3** - Integrasi Xendit dan webhook untuk update status LUNAS (belum)
 
-Koneksi ke MongoDB memakai library **Mongoose** (`lib/mongodb.js`).
+Kode tiap tahap bisa dilihat dari tab **Commits** atau dari **Tags** (`tahap-1`, `tahap-2`, ...).
 
-### Struktur "tabel" (collection)
+## Halaman
 
-| Model (file) | Collection | Field penting |
-|---|---|---|
-| `models/Product.js` | `products` | name, category (Makanan/Minuman/Snack/Paket), price, description, image, isAvailable |
-| `models/Checkout.js` | `checkouts` | items[] (product, name, price, quantity, subtotal), subtotal, tax, total, status |
-| `models/Payment.js` | `payments` | checkout (relasi ke checkouts), externalId (no. invoice), customer, shippingAddress, shippingFee, amount, paymentMethod, status, paidAt |
+- `/` - pilih menu, bisa filter kategori dan search
+- `/checkout` - isi keranjang, ubah jumlah, lihat total
+- `/payment` - isi alamat pengiriman dan pilih metode bayar
+- `/invoice/[id]` - tagihan setelah Confirm & Pay
+- `/orders` - riwayat pesanan
 
-Relasi: **Product** → dipilih ke dalam **Checkout** (items) → dibuatkan tagihan **Payment** (`payment.checkout` = `_id` checkout).
+## Database
 
-Status:
-- Checkout: `PENDING` → `MENUNGGU_PEMBAYARAN` → `LUNAS` / `KEDALUWARSA`
-- Payment: `PENDING` → `LUNAS` / `KEDALUWARSA`
+Pakai MongoDB Atlas, ada 3 collection:
 
-### API
+- `products` - data menu
+- `checkouts` - pesanan dari keranjang
+- `payments` - tagihan (data pembeli, alamat, metode bayar, total, status)
 
-| Method | Endpoint | Fungsi |
-|---|---|---|
-| GET | `/api/products?category=Makanan` | Ambil produk dari DB (otomatis isi data awal jika DB kosong) |
-| GET | `/api/seed` | Reset & isi ulang data produk |
-| POST | `/api/checkout` | Simpan checkout (harga dihitung ulang dari DB, bukan dari browser) |
-| GET | `/api/checkout/[id]` | Detail checkout |
-| POST | `/api/payment` | Simpan tagihan (Payment) dari checkout |
-| GET | `/api/payment` | Daftar semua tagihan |
-| GET | `/api/payment/[id]` | Detail tagihan |
+Model-nya ada di folder `models/`.
 
-### Alur
-1. **Select Item** → produk diambil dari collection `products`.
-2. **Checkout** → klik *Continue to Payment* → data disimpan ke `checkouts`.
-3. **Payment** → isi alamat & metode → *Confirm & Pay* → data disimpan ke `payments`.
-4. Halaman **Tagihan** (`/invoice/[id]`) menampilkan tagihan dari database. Semua tagihan bisa dilihat di **Riwayat Pesanan** (`/orders`).
+## Cara menjalankan
 
----
+1. Install dulu
 
-## Cara Menjalankan
-
-1. Buat database gratis di **MongoDB Atlas** dan salin connection string-nya.
-2. Salin `.env.example` menjadi `.env.local`, lalu isi `MONGODB_URI`.
-3. Jalankan:
-   ```bash
+   ```
    npm install
+   ```
+
+2. Buat file `.env.local` di folder ini, isi dengan connection string dari MongoDB Atlas
+
+   ```
+   MONGODB_URI=mongodb+srv://...
+   ```
+
+3. Jalankan
+
+   ```
    npm run dev
    ```
+
 4. Buka http://localhost:3000
 
-> `.env.local` berisi password database, jadi **tidak ikut di-push** ke GitHub (sudah ada di `.gitignore`).
-
-## Struktur Folder
-
-```
-WEB_PaymentGateway/
-├── components/        # Layout, Header, TopBar, ProductCard, StatusBadge
-├── context/           # CartContext (state keranjang)
-├── lib/
-│   ├── mongodb.js     # koneksi MongoDB
-│   ├── config.js      # pajak, ongkir, format rupiah
-│   └── seedData.js    # data menu awal
-├── models/            # Product, Checkout, Payment (skema Mongoose)
-├── pages/
-│   ├── index.js       # Select Item
-│   ├── checkout.js    # Checkout
-│   ├── payment.js     # Payment
-│   ├── invoice/[id].js# Tagihan
-│   ├── orders.js      # Riwayat pesanan
-│   └── api/           # products, seed, checkout, payment
-├── public/images/
-└── styles/globals.css
-```
+Data menu otomatis masuk ke database waktu pertama kali dibuka.
