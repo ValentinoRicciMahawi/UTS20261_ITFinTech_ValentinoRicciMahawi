@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 import TopBar from "@/components/TopBar";
 import { useCart } from "@/context/CartContext";
-import { formatRupiah, SHIPPING_FEE } from "@/lib/config";
+import { formatRupiah, SHIPPING_FEE, TAX_RATE } from "@/lib/config";
 
 const METHODS = [
   { value: "CARD", label: "Credit/Debit Card", sub: "Visa, Mastercard, JCB" },
@@ -131,13 +131,19 @@ export default function PaymentPage() {
           <section className="card-section">
             <h2>Order Summary</h2>
             <div className="row">
-              <span>Item(s) ({itemCount}) + pajak</span>
-              <span>{formatRupiah(checkout.total)}</span>
+              <span>Item(s) ({itemCount})</span>
+              <span>{formatRupiah(checkout.subtotal)}</span>
             </div>
             <div className="row">
-              <span>Shipping</span>
-              <span>{formatRupiah(SHIPPING_FEE)}</span>
+              <span>Tax (PB1 {TAX_RATE * 100}%)</span>
+              <span>{formatRupiah(checkout.tax)}</span>
             </div>
+            {SHIPPING_FEE > 0 && (
+              <div className="row">
+                <span>Shipping</span>
+                <span>{formatRupiah(SHIPPING_FEE)}</span>
+              </div>
+            )}
             <div className="row total">
               <span>Total</span>
               <span>{formatRupiah(grandTotal)}</span>

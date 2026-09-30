@@ -132,10 +132,12 @@ export default function InvoicePage() {
           <span>Tax</span>
           <span>{formatRupiah(checkout.tax)}</span>
         </div>
-        <div className="row">
-          <span>Shipping</span>
-          <span>{formatRupiah(payment.shippingFee)}</span>
-        </div>
+        {payment.shippingFee > 0 && (
+          <div className="row">
+            <span>Shipping</span>
+            <span>{formatRupiah(payment.shippingFee)}</span>
+          </div>
+        )}
         <div className="row total">
           <span>Total</span>
           <span>{formatRupiah(payment.amount)}</span>

@@ -96,7 +96,7 @@ export default async function handler(req, res) {
       fees: [
         { type: "Pajak Resto (PB1) 10%", value: checkout.tax },
         { type: "Ongkos Kirim", value: SHIPPING_FEE },
-      ],
+      ].filter((f) => f.value > 0),
       payment_methods: PAYMENT_METHODS[method].xendit,
       success_redirect_url: `${baseUrl}/invoice/${payment._id}`,
       failure_redirect_url: `${baseUrl}/invoice/${payment._id}`,

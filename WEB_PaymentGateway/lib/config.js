@@ -1,6 +1,6 @@
 // Konstanta harga yang dipakai di frontend & backend
 export const TAX_RATE = 0.1; // Pajak restoran (PB1) 10%
-export const SHIPPING_FEE = 10000; // Ongkos kirim flat
+export const SHIPPING_FEE = 0; // Pesan & makan di tempat, jadi tidak ada ongkir
 export const CATEGORIES = ["Semua", "Makanan", "Minuman", "Snack", "Paket"];
 
 export function formatRupiah(num) {
