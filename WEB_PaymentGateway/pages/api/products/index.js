@@ -1,21 +1,31 @@
-import products from "@/lib/seedData";
+import dbConnect from "@/lib/mongodb";
+import Product from "@/models/Product";
+import seedProducts from "@/lib/seedData";
 
 // GET /api/products?category=Makanan&q=nasi
-// Tahap 1: data menu masih statis dari lib/seedData.js (belum pakai database)
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { category, q } = req.query;
-  let data = products.map((p, i) => ({ _id: String(i + 1), ...p }));
+  try {
+    await dbConnect();
 
-  if (category && category !== "Semua") {
-    data = data.filter((p) => p.category === category);
-  }
-  if (q) {
-    data = data.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
-  }
+    // Kalau database masih kosong, isi otomatis dengan data menu awal
+    const count = await Product.countDocuments();
+    if (count === 0) {
+      await Product.insertMany(seedProducts);
+    }
 
-  return res.status(200).json({ data });
+    const { category, q } = req.query;
+    const filter = { isAvailable: true };
+    if (category && category !== "Semua") filter.category = category;
+    if (q) filter.name = { $regex: q, $options: "i" };
+
+    const products = await Product.find(filter).sort({ category: 1, name: 1 });
+    return res.status(200).json({ data: products });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
 }

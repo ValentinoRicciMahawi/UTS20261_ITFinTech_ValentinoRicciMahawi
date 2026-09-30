@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import Layout from "@/components/Layout";
 import TopBar from "@/components/TopBar";
 import { useCart } from "@/context/CartContext";
@@ -9,7 +10,31 @@ import { formatRupiah, hitungTotal, TAX_RATE } from "@/lib/config";
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, loaded, updateQty, removeItem, subtotal } = useCart();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const { tax, total } = hitungTotal(subtotal);
+
+  const handleContinue = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      // Simpan checkout ke database
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message);
+      router.push(`/payment?checkoutId=${json.data._id}`);
+    } catch (err) {
+      setError(err.message || "Gagal membuat checkout");
+      setSubmitting(false);
+    }
+  };
 
   return (
     <Layout title="Checkout">
@@ -62,12 +87,14 @@ export default function CheckoutPage() {
               <span>{formatRupiah(total)}</span>
             </div>
 
+            {error && <p className="error-box">⚠️ {error}</p>}
+
             <button
               className="btn-secondary"
-              onClick={() => router.push("/payment")}
-              disabled={cart.length === 0}
+              onClick={handleContinue}
+              disabled={submitting || cart.length === 0}
             >
-              Continue to Payment →
+              {submitting ? "Memproses..." : "Continue to Payment →"}
             </button>
             <Link href="/" className="link-center">
               + Tambah menu lain

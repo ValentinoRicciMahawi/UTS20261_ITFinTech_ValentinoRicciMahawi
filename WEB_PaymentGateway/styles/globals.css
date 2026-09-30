@@ -589,6 +589,7 @@ button:disabled {
   padding: 16px;
   margin: 0 0 14px;
 }
+.invoice-hero + .card-section,
 .card-section + .card-section {
   margin-top: 0;
 }
@@ -666,31 +667,108 @@ main > .card-section {
   margin-top: 10px;
 }
 
-/* ---------- Konfirmasi pesanan ---------- */
-.confirm-hero {
+/* ---------- Invoice ---------- */
+.invoice-hero {
   margin: 16px;
-  padding: 24px 16px;
+  padding: 22px 16px;
   border-radius: var(--radius);
   text-align: center;
   color: #fff;
+  background: linear-gradient(135deg, var(--primary), #f59e0b);
+}
+.invoice-hero.paid {
   background: linear-gradient(135deg, #16a34a, #22c55e);
 }
-.confirm-hero .hero-icon {
-  font-size: 40px;
+.hero-icon {
+  font-size: 38px;
 }
-.confirm-hero h2 {
-  font-size: 26px;
-  margin: 4px 0;
+.invoice-hero h2 {
+  font-size: 28px;
+  margin: 2px 0 8px;
 }
-.confirm-hero small {
-  opacity: 0.9;
+.waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+.mono {
+  font-family: "Courier New", monospace;
+  font-size: 13px;
 }
 .address {
   font-size: 14px;
   line-height: 1.6;
 }
-.confirm-actions {
+.card-section hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+.invoice-actions {
   padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.thanks {
+  text-align: center;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+.status-pending,
+.status-menunggu_pembayaran {
+  background: #fef3c7;
+  color: #b45309;
+}
+.status-lunas {
+  background: #dcfce7;
+  color: #15803d;
+}
+.status-kedaluwarsa {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ---------- Orders ---------- */
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: #fff;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.order-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 14px;
 }
 
 /* ---------- Misc ---------- */

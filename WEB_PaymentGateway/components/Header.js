@@ -42,6 +42,7 @@ export default function Header() {
             </div>
             <Link href="/" onClick={() => setMenuOpen(false)}>🍽️ Menu</Link>
             <Link href="/checkout" onClick={() => setMenuOpen(false)}>🛒 Keranjang ({totalItems})</Link>
+            <Link href="/orders" onClick={() => setMenuOpen(false)}>🧾 Riwayat Pesanan</Link>
             <p className="drawer-foot">Buka setiap hari 08.00 - 22.00</p>
           </nav>
           </div>

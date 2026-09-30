@@ -1,4 +1,4 @@
-// Data menu Cafe Pintar
+// Data menu awal Cafe Pintar (dipakai oleh /api/seed)
 const products = [
   // ===== Makanan =====
   {

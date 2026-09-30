@@ -1,9 +1,9 @@
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 import TopBar from "@/components/TopBar";
 import { useCart } from "@/context/CartContext";
-import { formatRupiah, hitungTotal, SHIPPING_FEE } from "@/lib/config";
+import { formatRupiah, SHIPPING_FEE } from "@/lib/config";
 
 const METHODS = [
   { value: "CARD", label: "Credit/Debit Card", sub: "Visa, Mastercard, JCB" },
@@ -13,8 +13,14 @@ const METHODS = [
 
 // ===== Halaman 3: PAYMENT (Secure Checkout) =====
 export default function PaymentPage() {
-  const { cart, loaded, subtotal, clearCart } = useCart();
-  const [order, setOrder] = useState(null); // pesanan yang sudah dikonfirmasi
+  const router = useRouter();
+  const { checkoutId } = router.query;
+  const { clearCart } = useCart();
+
+  const [checkout, setCheckout] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -24,79 +30,58 @@ export default function PaymentPage() {
     paymentMethod: "CARD",
   });
 
-  const { total } = hitungTotal(subtotal);
-  const grandTotal = total + SHIPPING_FEE;
-  const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (!checkoutId) {
+      setError("Checkout tidak ditemukan. Silakan ulangi dari keranjang.");
+      setLoading(false);
+      return;
+    }
+    fetch(`/api/checkout/${checkoutId}`)
+      .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
+      .then(({ ok, json }) => {
+        if (!ok) throw new Error(json.message);
+        setCheckout(json.data);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [router.isReady, checkoutId]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simpan ringkasan pesanan untuk ditampilkan, lalu kosongkan keranjang
-    setOrder({
-      ...form,
-      items: cart,
-      amount: grandTotal,
-      method: METHODS.find((m) => m.value === form.paymentMethod).label,
-    });
-    clearCart();
+    setError("");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, checkoutId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message);
+
+      clearCart();
+      // Tampilkan tagihan (invoice) yang sudah dibuat
+      router.push(`/invoice/${json.data._id}`);
+    } catch (err) {
+      setError(err.message || "Gagal membuat tagihan");
+      setSubmitting(false);
+    }
   };
 
-  // ===== Tampilan setelah Confirm & Pay =====
-  if (order) {
-    return (
-      <Layout title="Pesanan Dikonfirmasi">
-        <TopBar title="Pesanan Dikonfirmasi" backTo="/" />
-        <div className="confirm-hero">
-          <div className="hero-icon">🧾</div>
-          <p>Total Tagihan</p>
-          <h2>{formatRupiah(order.amount)}</h2>
-          <small>Metode: {order.method}</small>
-        </div>
-
-        <section className="card-section" style={{ margin: "0 16px 14px" }}>
-          <h2>Detail Pesanan</h2>
-          {order.items.map((item) => (
-            <div className="row" key={item.productId}>
-              <span>
-                {item.quantity}x {item.name}
-              </span>
-              <span>{formatRupiah(item.price * item.quantity)}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className="card-section" style={{ margin: "0 16px 14px" }}>
-          <h2>Dikirim ke</h2>
-          <p className="address">
-            <strong>{order.name}</strong> ({order.phone})
-            <br />
-            {order.address}
-          </p>
-        </section>
-
-        <div className="confirm-actions">
-          <Link href="/" className="btn-outline btn-block">
-            Kembali ke Menu
-          </Link>
-        </div>
-      </Layout>
-    );
-  }
+  const grandTotal = checkout ? checkout.total + SHIPPING_FEE : 0;
+  const itemCount = checkout ? checkout.items.reduce((s, i) => s + i.quantity, 0) : 0;
 
   return (
     <Layout title="Secure Checkout">
       <TopBar title="Secure Checkout" icon="🔒" backTo="/checkout" />
 
-      {loaded && cart.length === 0 ? (
-        <div className="empty">
-          <div className="empty-icon">🛒</div>
-          <p>Belum ada pesanan untuk dibayar.</p>
-          <Link href="/" className="btn-primary">
-            Lihat Menu
-          </Link>
-        </div>
-      ) : (
+      {loading && <p className="info">Memuat data checkout...</p>}
+      {!loading && !checkout && <p className="error-box" style={{ margin: 16 }}>⚠️ {error}</p>}
+
+      {checkout && (
         <form onSubmit={handleSubmit} className="payment-form">
           <section className="card-section">
             <h2>Shipping Address</h2>
@@ -147,7 +132,7 @@ export default function PaymentPage() {
             <h2>Order Summary</h2>
             <div className="row">
               <span>Item(s) ({itemCount}) + pajak</span>
-              <span>{formatRupiah(total)}</span>
+              <span>{formatRupiah(checkout.total)}</span>
             </div>
             <div className="row">
               <span>Shipping</span>
@@ -159,8 +144,10 @@ export default function PaymentPage() {
             </div>
           </section>
 
-          <button type="submit" className="btn-primary btn-block">
-            Confirm &amp; Pay
+          {error && <p className="error-box">⚠️ {error}</p>}
+
+          <button type="submit" className="btn-primary btn-block" disabled={submitting}>
+            {submitting ? "Membuat tagihan..." : "Confirm & Pay"}
           </button>
         </form>
       )}

@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext(null);
-const STORAGE_KEY = "cafe-pintar-cart";
+const STORAGE_KEY = "cafe-pintar-cart-v2";
+
+// ID produk dari MongoDB selalu 24 karakter hexa (contoh: 66f9a1c2e4b0...)
+const isValidId = (id) => /^[a-f0-9]{24}$/i.test(String(id));
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
@@ -11,7 +14,9 @@ export function CartProvider({ children }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setCart(JSON.parse(saved));
+      // Buang keranjang versi lama (ID produk bukan dari MongoDB)
+      localStorage.removeItem("cafe-pintar-cart");
+      if (saved) setCart(JSON.parse(saved).filter((i) => isValidId(i.productId)));
     } catch (e) {
       console.log("Gagal membaca keranjang", e);
     }
