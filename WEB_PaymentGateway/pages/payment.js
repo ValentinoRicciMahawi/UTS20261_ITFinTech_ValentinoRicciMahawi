@@ -149,6 +149,7 @@ export default function PaymentPage() {
           <button type="submit" className="btn-primary btn-block" disabled={submitting}>
             {submitting ? "Membuat tagihan..." : "Confirm & Pay"}
           </button>
+          <p className="secure-note">🔒 Pembayaran diproses aman oleh Xendit</p>
         </form>
       )}
     </Layout>

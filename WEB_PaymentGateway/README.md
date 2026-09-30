@@ -1,55 +1,36 @@
 # WEB_PaymentGateway - Cafe Pintar
 
-Project UTS IT FinTech. Website pemesanan makanan dan minuman untuk "Cafe Pintar" dengan pembayaran lewat payment gateway.
+Tugas UTS IT FinTech. Website buat pesan makanan dan minuman di Cafe Pintar, pembayarannya pakai payment gateway Xendit.
 
-Dibuat pakai Next.js (Pages Router) dan MongoDB.
+Dibuat pakai Next.js (page router), MongoDB, dan Xendit.
 
-## Tahapan pengerjaan
+## Tahapan
+1. Tahap 1: bikin project Next.js dan tampilan 3 halaman (Select Item, Checkout, Payment)
+2. Tahap 2: sambungin ke MongoDB, ada tabel Product, Checkout, dan Payment
+3. Tahap 3: integrasi Xendit + webhook biar status pembayaran jadi LUNAS otomatis
 
-1. **Tahap 1** - Setup project Next.js dan tampilan 3 halaman (Select Item, Checkout, Payment)
-2. **Tahap 2** - Menyambungkan ke MongoDB (Product, Checkout, Payment)
-3. **Tahap 3** - Integrasi Xendit dan webhook untuk update status LUNAS (belum)
+## Alur pembayaran
+1. User pilih menu, checkout, isi alamat, lalu klik Confirm & Pay
+2. Server bikin invoice di Xendit, terus muncul halaman tagihan
+3. User klik "Bayar Sekarang" dan bayar di halaman Xendit
+4. Setelah dibayar, Xendit kirim webhook ke `/api/webhook/xendit`
+5. Status di database berubah jadi LUNAS, halaman tagihan ikut berubah sendiri
 
-Kode tiap tahap bisa dilihat dari tab **Commits** atau dari **Tags** (`tahap-1`, `tahap-2`, ...).
-
-## Halaman
-
-- `/` - pilih menu, bisa filter kategori dan search
-- `/checkout` - isi keranjang, ubah jumlah, lihat total
-- `/payment` - isi alamat pengiriman dan pilih metode bayar
-- `/invoice/[id]` - tagihan setelah Confirm & Pay
-- `/orders` - riwayat pesanan
-
-## Database
-
-Pakai MongoDB Atlas, ada 3 collection:
-
-- `products` - data menu
-- `checkouts` - pesanan dari keranjang
-- `payments` - tagihan (data pembeli, alamat, metode bayar, total, status)
-
-Model-nya ada di folder `models/`.
-
-## Cara menjalankan
-
-1. Install dulu
-
-   ```
-   npm install
-   ```
-
-2. Buat file `.env.local` di folder ini, isi dengan connection string dari MongoDB Atlas
-
-   ```
-   MONGODB_URI=mongodb+srv://...
-   ```
-
-3. Jalankan
-
-   ```
-   npm run dev
-   ```
-
+## Cara jalanin
+1. `npm install`
+2. Bikin file `.env.local` (contohnya ada di `.env.example`), isi:
+   - `MONGODB_URI` - connection string MongoDB Atlas
+   - `XENDIT_SECRET_KEY` - secret key Xendit (mode test)
+   - `XENDIT_CALLBACK_TOKEN` - verification token webhook dari dashboard Xendit
+   - `NEXT_PUBLIC_BASE_URL` - URL website (localhost / ngrok / vercel)
+3. `npm run dev`
 4. Buka http://localhost:3000
 
-Data menu otomatis masuk ke database waktu pertama kali dibuka.
+## Webhook
+URL webhook yang didaftarin di dashboard Xendit (Settings > Webhooks > Invoices paid):
+
+```
+https://<url-website>/api/webhook/xendit
+```
+
+Karena Xendit harus bisa akses URL-nya dari internet, websitenya di-deploy dulu ke Vercel (atau pakai ngrok kalau di lokal).

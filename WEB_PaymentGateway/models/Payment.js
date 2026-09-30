@@ -17,7 +17,7 @@ const PaymentSchema = new mongoose.Schema(
     shippingFee: Number,
     amount: { type: Number, required: true }, // total yang ditagih
     paymentMethod: { type: String, enum: ["CARD", "QRIS", "OTHER"], default: "CARD" },
-    // data dari payment gateway Xendit (diisi di tahap integrasi Xendit)
+    // data dari Xendit
     xenditInvoiceId: String,
     invoiceUrl: String,
     expiryDate: Date,

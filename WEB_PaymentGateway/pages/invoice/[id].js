@@ -13,8 +13,8 @@ const METHOD_LABEL = {
 };
 
 // ===== Halaman Tagihan (Invoice) =====
-// Muncul setelah user klik "Confirm & Pay". Data diambil dari collection "payments"
-// (MongoDB) beserta data checkout-nya.
+// Muncul setelah user klik "Confirm & Pay". Status di-cek otomatis tiap 4 detik,
+// dan akan berubah jadi LUNAS begitu webhook Xendit masuk.
 export default function InvoicePage() {
   const router = useRouter();
   const { id } = router.query;
@@ -23,14 +23,24 @@ export default function InvoicePage() {
 
   useEffect(() => {
     if (!id) return;
-    // Ambil data tagihan dari database
-    fetch(`/api/payment/${id}`)
-      .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
-      .then(({ ok, json }) => {
-        if (!ok) throw new Error(json.message);
+    let timer;
+
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/payment/${id}`);
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message);
         setPayment(json.data);
-      })
-      .catch((err) => setError(err.message));
+        // polling selama status masih PENDING
+        if (json.data.status === "PENDING") {
+          timer = setTimeout(load, 4000);
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    load();
+    return () => clearTimeout(timer);
   }, [id]);
 
   if (error) {
@@ -65,7 +75,7 @@ export default function InvoicePage() {
         <StatusBadge status={payment.status} />
         {!lunas && payment.status === "PENDING" && (
           <small className="waiting">
-            <span className="dot" /> Menunggu pembayaran...
+            <span className="dot" /> Menunggu pembayaran... status akan update otomatis
           </small>
         )}
       </div>
@@ -148,6 +158,11 @@ export default function InvoicePage() {
       </section>
 
       <div className="invoice-actions">
+        {payment.status === "PENDING" && payment.invoiceUrl && (
+          <a href={payment.invoiceUrl} className="btn-primary btn-block">
+            Bayar Sekarang via Xendit →
+          </a>
+        )}
         {lunas && <p className="thanks">Terima kasih! Pesananmu sedang disiapkan 👨‍🍳</p>}
         <Link href="/" className="btn-outline btn-block">
           Kembali ke Menu
